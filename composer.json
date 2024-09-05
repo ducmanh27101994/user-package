@@ -1,0 +1,17 @@
+{
+    "name": "fmc-example/user-package",
+    "description": "Example",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "FmcExample\\UserPackage\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "FmcExample\\UserPackage\\UserPackageServiceProvider"
+            ]
+        }
+    }
+}
