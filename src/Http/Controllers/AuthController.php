@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use FmcExample\UserPackage\services;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -20,11 +21,17 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
+        $validate = Validator::make($request->all(), [
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string',
         ]);
+        if ($validate->fails()) {
+            return response()->json([
+                'status' => 400,
+                'message' => $validate->errors()
+            ]);
+        }
 
         User::create([
             'name' => $request->name,
@@ -32,22 +39,41 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return response()->json(['message' => 'Đăng ký thành công'], 201);
+        return response()->json([
+            'message' => 'Đăng ký thành công',
+            'status' => 200
+        ]);
     }
 
     public function login(Request $request)
     {
-        $request->validate([
+        $validate = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
+        if ($validate->fails()) {
+            return response()->json([
+                'status' => 400,
+                'message' => $validate->errors()
+            ]);
+        }
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
             $payload['user_id'] = $user->id;
             $token = $this->jwtService->createToken($payload);
-            return response()->json(['data' => $user, 'message' => 'Đăng nhập thành công',  'token' => $token], 201);
+
+            return response()->json([
+                'status' => 200,
+                'data' => $user,
+                'message' => 'Đăng nhập thành công',
+                'token' => $token,
+            ]);
         }
-        return response()->json(['message' => 'Unauthorized'], 401);
+
+        return response()->json([
+            'status' => 400,
+            'message' => 'Unauthorized',
+        ]);
     }
 }
