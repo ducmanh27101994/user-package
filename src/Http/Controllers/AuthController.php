@@ -7,9 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use FmcExample\UserPackage\services;
 
 class AuthController extends Controller
 {
+    protected $jwtService;
+
+    public function __construct(services\JwtService $jwtService)
+    {
+        $this->jwtService = $jwtService;
+    }
+
     public function register(Request $request)
     {
         $request->validate([
@@ -36,10 +44,10 @@ class AuthController extends Controller
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
-
-            return response()->json(['data' => $user, 'message' => 'Đăng nhập thành công'], 201);
+            $payload['user_id'] = $user->id;
+            $token = $this->jwtService->createToken($payload);
+            return response()->json(['data' => $user, 'message' => 'Đăng nhập thành công',  'token' => $token], 201);
         }
-
         return response()->json(['message' => 'Unauthorized'], 401);
     }
 }
