@@ -21,17 +21,12 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $validate = Validator::make($request->all(), [
+        $validate = $this->validateInput($request, [
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string',
         ]);
-        if ($validate->fails()) {
-            return response()->json([
-                'status' => 400,
-                'message' => $validate->errors()
-            ]);
-        }
+        if (!$validate) return $validate;
 
         User::create([
             'name' => $request->name,
@@ -47,16 +42,11 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $validate = Validator::make($request->all(), [
+        $validate = $this->validateInput($request, [
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
-        if ($validate->fails()) {
-            return response()->json([
-                'status' => 400,
-                'message' => $validate->errors()
-            ]);
-        }
+        if (!$validate) return $validate;
 
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             $user = Auth::user();
@@ -75,5 +65,19 @@ class AuthController extends Controller
             'status' => 400,
             'message' => 'Unauthorized',
         ]);
+    }
+
+    private function validateInput(Request $request, array $rules)
+    {
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'message' => $validator->errors()
+            ]);
+        }
+
+        return true;
     }
 }
